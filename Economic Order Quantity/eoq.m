@@ -4,17 +4,16 @@ function [solution] = eoq(prob_struct)
 % - Basic EOQ
 % - EOQ with quantity discounts
 % - EOQ with stock rupture (w/instant stock reposition, R = Inf)
-% - EOQ with stock rupture and quantity discounts (numeric/iterative method)
+% - EOQ with stock rupture and quantity discounts
 %
 % INPUTS
 % prob_struct: problem structure with the following fields:
 %              - demand/time (D)
 %              - fixed cost/order (A)
 %              - housing costs/unit/time (h)
-%              - stock break cost/unit/time (p) [only for stock rupture variant of eoq]
-%              - fixed cost (c) [basic/stock rupture variant] or array of costs [only for quantity discounts variant]
-%              - Minimum quantity Q(i) to order to get the price c(i) [only for quantity discounts variant]
-%              - (scale) for numeric Q* estimation (only for stock rupture + quantity discounts variant)
+%              - stock break cost/unit/time (p) [for stock rupture variants]
+%              - fixed cost (c) [basic/stock rupture variant] or array of costs [for quantity discounts variants]
+%              - Minimum quantity Q(i) to order to get the price c(i) [for quantity discounts variants]
 %
 %
 % OUTPUTS
@@ -65,69 +64,81 @@ else
     Q_tilda = sqrt(2*A*D/h);
 end
 
-% Basic EOQ or just one of its variants
-if ~rupture_allowed || ~quantity_discount
+% Get indices array from where we calculate our possible Q*
+indices = find(Q >= Q_tilda);
 
-    % Get indices array from where we calculate our possible Q*
-    indices = find(Q >= Q_tilda);
+% If no index >= Q~ calculate Q* for our closest index / only entry
+if isempty(indices)
+    cQ_best = cQ(length(cQ));
 
-    % If no index >= Q~ calculate Q* for our closest index / only entry
-    if isempty(indices)
-        cQ_best = cQ(length(cQ));
-
-        if rupture_allowed
-            K_star = cQ_best*D + sqrt(2*A*D*h) * sqrt(p/(h+p));
-        else
-            K_star = A*D/Q_tilda + cQ_best*D + h*Q_tilda/2;
-        end
-
-        Q_star = Q_tilda;
-
-    % Otherwise, calculate all K's from the Q~ index onwards [quantity discounts variant] 
+    if rupture_allowed && ~quantity_discount
+        K_star = cQ_best*D + sqrt(2*A*D*h) * sqrt(p/(h+p));
+    elseif rupture_allowed && quantity_discount % Mixed variants model
+        S_max_tilda = Q_tilda * h/(h+p); % Mandatory relationship between Q* and Smax* -> Smax*/Q* = h/(h+P)
+        K_star = A*D/Q_tilda + cQ_best*D + h/2*Q_tilda - h*S_max_tilda + ((h+p)/2)*(S_max_tilda^2/Q_tilda);
     else
+        K_star = A*D/Q_tilda + cQ_best*D + h*Q_tilda/2;
+    end
 
-        K_star = Inf;
+    Q_star = Q_tilda;
 
-        for i = indices
+% Otherwise, calculate all K's from the Q~ index onwards [quantity discounts variant or mixed variant] 
+else
 
+    K_star = Inf;
+
+    for i = indices
+
+        if ~rupture_allowed
             K_temp = A*D/Q(i) + cQ(i)*D + h*Q(i)/2;
+        else
+            S_max_temp = Q(i) * h/(h+p); % Mandatory relationship between Q* and Smax* -> Smax*/Q* = h/(h+p)
+            K_temp = A*D/Q(i) + cQ(i)*D + h/2*Q(i) - h*S_max_temp + ((h+p)/2)*(S_max_temp^2/Q(i));                
+        end
 
-            % If our calculated K is smaller than our best K, overwrite our best K
-            if K_temp < K_star
-                K_star = K_temp;
-                Q_star = Q(i);
-            end
-
+        % If our calculated K is smaller than our best K, overwrite our best K
+        if K_temp < K_star
+            K_star = K_temp;
+            Q_star = Q(i);
         end
 
     end
 
-    % Get our T* from Q*
-    T_star = Q_star / D;
+end
 
-    % Build solution for basic eoq and eoq with discounts in quantity
-    solution.Q_star = Q_star;
-    solution.K_star = K_star;
-    solution.T_star = T_star;
+% Get our T* from Q*
+T_star = Q_star / D;
 
-    % Build solution for the stock rupture variant of the model
-    if rupture_allowed
+% Build solution for basic eoq and eoq with discounts in quantity
+solution.Q_star = Q_star;
+solution.K_star = K_star;
+solution.T_star = T_star;
+
+% Build solution for the stock rupture variant of the model
+if rupture_allowed
+
+    if ~quantity_discount
         solution.S_max_star = sqrt(2*A*D*h/(p*(h+p)));
-        solution.I_max_star = Q_star - solution.S_max_star;
-        solution.S_bar = solution.S_max_star^2 / (2*Q_star);
-        solution.I_bar = solution.I_max_star^2 / (2*Q_star);
+    else
+        solution.S_max_star = Q_star * h/(h+p);
     end
 
-% Model with a mix of the 2 EOQ variants (numeric/graphic resolution)    
-else
-    scale = prob_struct.scale;
+    solution.I_max_star = Q_star - solution.S_max_star;
+    solution.S_bar = solution.S_max_star^2 / (2*Q_star);
+    solution.I_bar = solution.I_max_star^2 / (2*Q_star);
+
+end
+
+% EXTRA: Plots for the variant with a mix of quantity discounts and rupture
+% allowed
+if rupture_allowed && quantity_discount
     
     %Check if our last Q in the quantity discounts is larger than the
     %minimum of a simple EOQ value function
     if Q(length(Q)) < Q_tilda
-        QQ = 1:scale:Q_tilda+1; 
+        QQ = 1:Q_tilda*2; 
     else
-        QQ = 1:scale:Q(length(Q));
+        QQ = 1:Q(length(Q));
     end
     
     nq = length(QQ);
@@ -142,17 +153,7 @@ else
         KK(i) = A*D/Q_temp + cQ(idx)*D + h/2*Q_temp - h*S_temp + ((h+p)/2)*(S_temp^2/Q_temp);
     end
     [~,idx] = min(KK);
-    Q_star = QQ(idx); K_star = KK(idx);
-    
-    %Build approximate solution for the mixed variants model
-    solution.Q_star = Q_star;
-    solution.K_star = K_star;
-    solution.T_star = Q_star / D;
-    solution.S_max_star = Q_star*h/(h+p);
-    solution.I_max_star = Q_star - solution.S_max_star;
-    solution.S_bar = solution.S_max_star^2 / (2*Q_star);
-    solution.I_bar = solution.I_max_star^2 / (2*Q_star);
-    
+
     % Plot cost function of K
     subplot(1,2,1)
     semilogy(QQ,KK,'b');
