@@ -136,9 +136,9 @@ if rupture_allowed && quantity_discount
     %Check if our last Q in the quantity discounts is larger than the
     %minimum of a simple EOQ value function
     if Q(length(Q)) < Q_tilda
-        QQ = 1:Q_tilda*2; 
+        QQ = 1:0.1:Q_tilda*2; 
     else
-        QQ = 1:Q(length(Q));
+        QQ = 1:0.1:Q(length(Q));
     end
     
     nq = length(QQ);
@@ -159,9 +159,11 @@ if rupture_allowed && quantity_discount
     semilogy(QQ,KK,'b');
     hold on
     plot(QQ(idx),KK(idx),'r.','MarkerSize',10);
+    plot(Q_tilda*ones(length(min(KK)/2:min(KK)*2),1),min(KK)/2:min(KK)*2,'c--');
     xlabel('Q'); ylabel('K(Q,Smax(Q))');
     title('K value across Q where Smax(Q) = Q * h/(h+p)')
-    legend('Value(K)','Optimal Solution');
+    legend('K(Q,Smax)','(Q*,K*)','Q~');
+    ylim([min(KK)/2 min(KK)*100]);
     
     % EXTRA: Create 3D grid to get the solution space of K with every
     % possible Q and Smax near the calculated optimum
