@@ -7,7 +7,7 @@ function [solution_K,solution_N] = smcr(prob_struct,sim_arg,Time)
 % A - fixed cost per delivery
 % c - unit cost
 % h - housing costs
-% p'- cost per unit missing, independent of rupture duration
+% p'- cost per unit missing, which is independent of rupture duration
 % Y - demand per unit of time (with known density and distribution)
 % r - delivery point
 % l - delivery time
@@ -54,7 +54,7 @@ function [solution_K,solution_N] = smcr(prob_struct,sim_arg,Time)
 % 
 % 
 % 
-%
+% Coded by João Araújo, 2019
 % 
 
 %% Setup
@@ -229,7 +229,7 @@ if exist('sim_arg','var') && strcmp(sim_arg,'simulate') && exist('Time','var');
             if ~ordering
                 ordering = true;
                 l_count = step;
-            elseif ordering && l_count >= prob_struct.l
+            elseif ordering && l_count >= l
                 ordering = false;
                 Y_arr(i+1) = Y_arr(i+1) + Q;
             else
