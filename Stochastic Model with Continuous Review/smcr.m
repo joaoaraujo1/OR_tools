@@ -196,6 +196,7 @@ if exist('sim_arg','var') && strcmp(sim_arg,'simulate') && exist('Time','var');
     Y_arr = zeros(length(X_arr),1);  % stock level (y-axis)
     Y_arr(1) = r;
     r_arr = r*ones(1,length(X_arr)); % r marker
+    rupt_arr = zeros(size(r_arr));   % stock rupture marker 
 
 
     % Initialize iterator and variable that marks an order is in progress
@@ -249,6 +250,7 @@ if exist('sim_arg','var') && strcmp(sim_arg,'simulate') && exist('Time','var');
     xlim([X_arr(1) X_arr(end)]);
     ylim([-Q/10 Q + r]);
     plot(X_arr,r_arr,'b--');
+    plot(X_arr,rupt_arr,'r--');
     legend('Stock level','Order point (r)');
     ylabel('Stock units');
     xlabel('Time units');
