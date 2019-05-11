@@ -81,7 +81,7 @@ for k = 1:K
     C{k} = iD(C{k});
     
 end
-title('Clustered Data')
+title(['Clustered Data with ' num2str(K) ' classes'])
 hold off
 
 
