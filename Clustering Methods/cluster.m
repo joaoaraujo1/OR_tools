@@ -1,5 +1,5 @@
 function [C,linkage_dist,agg_sch,Delta,Validation] = cluster(filename,K,arg3,arg4)
-% Cluster - Function for data clustering in K classes using non-hierarchic methods
+% Cluster - Function for data clustering in K classes using hierarchic methods
 %
 %
 % INPUT
