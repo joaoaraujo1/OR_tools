@@ -25,25 +25,14 @@ if idx == 0
 end
 
 goal = critical_arch(1); % if we reach this node we have a cycle
-X0{1,1} = critical_arch;
-X0{1,3} = arches_type(idx);
 closed_set = [critical_arch(1),critical_arch(1)]; % add arch to the closed set to avoid double arch cycle
 
-% Initialize search tree structure
-fringe = [];
-candidates = cell2mat(Graph.struct(critical_arch(1),1));
-candidates = candidates(~ismember(candidates,closed_set));
-
-for i = 1:size(candidates,2)
-    [~,idx] = ismember([critical_arch(1),candidates(i)],arches_aux,'rows');
-    
-    entry_path = [critical_arch(1), candidates(i)];
-    entry_path_flow = maxflows(idx);
-    entry_maxflow = maxflows(idx);
-    entry_type = arches_type(idx);
-    
-    fringe = [fringe;{entry_path},{entry_path_flow},entry_maxflow,entry_maxflow,{entry_type}];
-end
+% Initialize our fringe with the data from our chosen ook arc
+entry_path = critical_arch;
+entry_path_flow = maxflows(idx);
+entry_maxflow = maxflows(idx);
+entry_type = arches_type(idx);
+fringe = [{entry_path},{entry_path_flow},entry_maxflow,entry_maxflow,{entry_type}];
 
 % Core search algorithm
 while((length(closed_set) < length(arches_aux)) && ~isempty(fringe) && ~has_cycle)
