@@ -69,7 +69,9 @@ end
 
 % Once we have our best solution, the assigned facilities will be the ones
 % with the lowest cost for each individual
-[~,assignment_vector] = min(Cij(:,sort(S)),[],2);
+S = sort(S);
+[~,assignment_vector] = min(Cij(:,S),[],2);
+assignment_vector = S(assignment_vector);
 
 
 end
