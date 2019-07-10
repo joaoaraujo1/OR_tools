@@ -56,7 +56,7 @@ load('D_nonSTD.mat');
 D(D == 0) = Inf;
 
 %% Core Algorithm
-if(strcmp(arg3,'sin') || strcmp(arg3,'comp') %|| strcmp(arg3,'med') || strcmp(arg3,'ward'))
+if(strcmp(arg3,'sin') || strcmp(arg3,'comp')) %|| strcmp(arg3,'med') || strcmp(arg3,'ward')
     
     [linkage_dist,agg_sch,C_hist,Delta] = hierarchic(D,arg3);
     
@@ -72,21 +72,8 @@ Validation = struct;
 
 % Cophenetic correlation
 D(isinf(D)) = 0; Delta(isnan(Delta)) = 0;
-mean_D = mean(mean(D));
-mean_Delta = mean(mean(Delta));
-
-num = 0;
-den1 = 0;
-den2 = 0;
-for i = 1:length(D)-1
-    for j = i:length(D)
-        num = num + (D(i,j) - mean_D) * (Delta(i,j) - mean_Delta);
-        den1 = den1 + (D(i,j) - mean_D)^2;
-        den2 = den2 + (Delta(i,j) - mean_Delta)^2;
-    end
-end
-
-R_coph = num / sqrt(den1 * den2);
+corr = corrcoef(D,Delta);
+R_coph = corr(1,2);
 
 % Stress measure
 num = 0;
