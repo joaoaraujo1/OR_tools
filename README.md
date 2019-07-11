@@ -1,5 +1,5 @@
 # Operational Research Tools
-This repository features a library of functions I have created when doing my Minor in Statistics and OR and implements some typical algorithms and methods used in operational research and multivariate exploratory analyses. All code is written in MATLAB
+This repository features a library of functions I have created when doing my Minor in Statistics and OR at [FCUL](https://ciencias.ulisboa.pt/) and implements some typical algorithms and methods used in operational research and multivariate exploratory analyses. All code is written in MATLAB
 
 ## Optimization - Flows and Networks (IP)
 - Pape, D'Esopo and Moore algorithm (PDM): Shortest or longest path between a node and every other node on a graph (also detects cycles)
